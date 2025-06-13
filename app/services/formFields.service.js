@@ -25,8 +25,27 @@ exports.getformFieldsById = async (id) => {
 exports.createformFields = async (data) => {
   return await formFields.create(data);
 };
+
 exports.bulkCreateformFields = async (dataArray) => {
-  return await formFields.insertMany(dataArray);
+  const conditions = dataArray.map(item => ({
+    form_id: item.form_id,
+    title: item.title.trim(),
+  }));
+
+  const existingFields = await formFields.find({ $or: conditions });
+
+  const existingSet = new Set(
+    existingFields.map(item => `${item.form_id.toString()}__${item.title.trim()}`)
+  );
+
+  const uniqueData = dataArray.filter(item => {
+    const key = `${item.form_id.toString()}__${item.title.trim()}`;
+    return !existingSet.has(key);
+  });
+
+  if (uniqueData.length === 0) return [];
+
+  return await formFields.insertMany(uniqueData);
 };
 
 exports.updateformFields = async (id, data) => {

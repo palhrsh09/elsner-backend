@@ -28,16 +28,53 @@ exports.getformFieldsDataById = async (req, res) => {
 
 exports.createformFieldsData = async (req, res) => {
   try {
-    const formFieldsData = await formFieldsDataService.createformFieldsData(req.body);
+    const { field_id, value } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(field_id)) {
+      return res.status(400).json({ message: "Invalid field_id" });
+    }
+
+    if (!value || typeof value !== "string" || !value.trim()) {
+      return res.status(400).json({ message: "Value is required and must be a non-empty string" });
+    }
+
+    const formFieldsData = await formFieldsDataService.createformFieldsData({
+      field_id,
+      value: value.trim(),
+    });
+
     res.status(200).json({ data: formFieldsData });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+
 exports.bulkCreateformFieldsData = async (req, res) => {
   try {
-    const formFieldsData = await formFieldsDataService.bulkCreateformFieldsData(req.body);
+    const data = req.body;
+
+    if (!Array.isArray(data) || data.length === 0) {
+      return res.status(400).json({ message: "Payload must be a non-empty array" });
+    }
+
+    const filteredData = data.filter(item => 
+      mongoose.Types.ObjectId.isValid(item.field_id) &&
+      typeof item.value === "string" &&
+      item.value.trim() !== ""
+    );
+
+    if (filteredData.length === 0) {
+      return res.status(400).json({ message: "No valid form field data found in the payload" });
+    }
+
+    const cleanedPayload = filteredData.map(item => ({
+      field_id: item.field_id,
+      value: item.value.trim(),
+    }));
+
+    const formFieldsData = await formFieldsDataService.bulkCreateformFieldsData(cleanedPayload);
+
     res.status(200).json({ success: true, data: formFieldsData });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

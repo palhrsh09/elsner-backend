@@ -28,7 +28,15 @@ exports.getformsById = async (req, res) => {
 
 exports.createforms = async (req, res) => {
   try {
-    const forms = await formsService.createForms(req.body);
+    const { title, description } = req.body;
+    if (!title || typeof title !== "string" || !title.trim()) {
+      return res.status(400).json({ message: "Title is required and must be a non-empty string" });
+    }
+    const forms = await formsService.createForms({
+      title: title.trim(),
+      description: description?.trim() || null,
+    });
+
     res.status(200).json({ data: forms });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -37,8 +45,25 @@ exports.createforms = async (req, res) => {
 
 exports.updateforms = async (req, res) => {
   try {
-    const forms = await formsService.updateForms(req.params.id, req.body);
-    if (!forms) return res.status(404).json({ message: "forms not found" });
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid form ID" });
+    }
+
+    const { title, description } = req.body;
+
+    if (title && (!title.trim() || typeof title !== "string")) {
+      return res.status(400).json({ message: "Title must be a non-empty string" });
+    }
+
+    const forms = await formsService.updateForms(id, {
+      ...(title && { title: title.trim() }),
+      ...(description !== undefined && { description: description?.trim() || null }),
+    });
+
+    if (!forms) return res.status(404).json({ message: "Form not found" });
+
     res.status(200).json({ data: forms, isUpdated: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
