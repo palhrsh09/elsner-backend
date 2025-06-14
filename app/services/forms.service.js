@@ -63,7 +63,6 @@ exports.getFormsByIdWithData = async (formId) => {
   const form = await Forms.findById(objectId, "title description").lean();
   if (!form) throw new Error("Form not found");
 
-  // Aggregate responses
   const result = await FormFieldData.aggregate([
     {
       $lookup: {
