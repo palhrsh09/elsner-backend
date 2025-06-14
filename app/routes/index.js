@@ -1,4 +1,3 @@
-const { verifyToken } = require("../middleware");
 module.exports = (app, express) => {
   const router = express.Router();
 

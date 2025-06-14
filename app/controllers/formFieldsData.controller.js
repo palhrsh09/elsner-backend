@@ -1,5 +1,5 @@
 const formFieldsDataService = require("../services/formFieldsData.service.js");
-
+const mongoose = require("mongoose")
 exports.getAllformFieldsData = async (req, res) => {
   try {
     const formFieldsData = await formFieldsDataService.getAllformFieldsData({
@@ -57,7 +57,7 @@ exports.bulkCreateformFieldsData = async (req, res) => {
     if (!Array.isArray(data) || data.length === 0) {
       return res.status(400).json({ message: "Payload must be a non-empty array" });
     }
-
+    const user_id = new mongoose.Types.ObjectId();
     const filteredData = data.filter(item => 
       mongoose.Types.ObjectId.isValid(item.field_id) &&
       typeof item.value === "string" &&
@@ -71,6 +71,7 @@ exports.bulkCreateformFieldsData = async (req, res) => {
     const cleanedPayload = filteredData.map(item => ({
       field_id: item.field_id,
       value: item.value.trim(),
+      user_id 
     }));
 
     const formFieldsData = await formFieldsDataService.bulkCreateformFieldsData(cleanedPayload);

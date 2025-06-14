@@ -1,5 +1,6 @@
 const db = require("../models");
 const Forms = db.forms;
+const FormFieldData = db.formFieldsData
 const mongoose = require("mongoose")
 
 exports.getAllForms = async ({ pageIndex, pageSize, sortOrder, sortKey, query, showDeleted }) => {
@@ -55,6 +56,51 @@ exports.getFormsById = async (id) => {
 
   return result[0]; 
 };
+
+exports.getFormsByIdWithData = async (formId) => {
+  const objectId = new mongoose.Types.ObjectId(formId);
+
+  const form = await Forms.findById(objectId, "title description").lean();
+  if (!form) throw new Error("Form not found");
+
+  // Aggregate responses
+  const result = await FormFieldData.aggregate([
+    {
+      $lookup: {
+        from: "FormFields",
+        localField: "field_id",
+        foreignField: "_id",
+        as: "fieldInfo"
+      }
+    },
+    { $unwind: "$fieldInfo" },
+    {
+      $match: {
+        "fieldInfo.form_id": objectId
+      }
+    },
+    {
+      $group: {
+        _id: "$user_id",
+        responses: {
+          $push: {
+            field_id: "$field_id",
+            title: "$fieldInfo.title",
+            type: "$fieldInfo.type",
+            value: "$value"
+          }
+        }
+      }
+    }
+  ]);
+
+  return {
+    formTitle: form.title,
+    formDescription: form.description,
+    data: result
+  };
+};
+
 
 exports.createForms = async (data) => {
   return await Forms.create(data);

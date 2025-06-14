@@ -4,6 +4,7 @@ const forms = require('../controllers/forms.controller.js');
 
 router.get('/', forms.getAllforms);
 router.get('/:id', forms.getformsById);
+router.get('/data/:id', forms.getformDataById);
 router.post('/', forms.createforms);
 router.put('/:id', forms.updateforms);
 router.delete('/:id', forms.deleteforms);

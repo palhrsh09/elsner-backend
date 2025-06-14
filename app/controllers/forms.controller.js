@@ -26,6 +26,15 @@ exports.getformsById = async (req, res) => {
   }
 };
 
+exports.getformDataById = async (req,res) =>{
+   try {
+    const forms = await formsService.getFormsByIdWithData(req.params.id);
+    res.status(200).json({ data: forms });
+   } catch (error) {
+      res.status(500).json({ message: error.message })
+   }
+}
+
 exports.createforms = async (req, res) => {
   try {
     const { title, description } = req.body;
